@@ -17,6 +17,7 @@ import {
   Image,
   Package,
 } from "lucide-react";
+import { toast } from "react-toastify";
 
 export default function Categories() {
   const [categories, setCategories] = useState([]);
@@ -36,14 +37,17 @@ export default function Categories() {
   const [filters, setFilters] = useState({
     activeOnly: true,
   });
+  const [deletingId, setDeletingId] = useState(null);
 
   useEffect(() => {
     fetchCategories();
-  }, [pagination.currentPage, pagination.limit, filters, searchTerm]);
+  }, [pagination.currentPage, pagination.limit, filters.activeOnly, searchTerm]);
 
   const fetchCategories = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const params = {
         page: pagination.currentPage,
         limit: pagination.limit,
@@ -51,42 +55,54 @@ export default function Categories() {
         active: filters.activeOnly,
       };
 
-      Object.keys(params).forEach((key) => {
-        if (params[key] === null || params[key] === "") {
-          delete params[key];
-        }
-      });
-
       const response = await axiosClient.get("/categories", { params });
 
       if (response.data && response.data.success) {
         setCategories(response.data.data || []);
-        setPagination({
-          ...pagination,
+        setPagination(prev => ({
+          ...prev,
           totalPages: response.data.pagination?.totalPages || 1,
           totalCategories: response.data.pagination?.totalCategories || 0,
-        });
+        }));
       } else {
         setCategories([]);
+        toast.error("Gagal memuat data kategori");
       }
-      setLoading(false);
     } catch (err) {
-      setError(err.response?.data?.message || err.message);
-      setLoading(false);
-      console.error("Failed to fetch categories:", err);
+      const errorMsg = err.response?.data?.message || err.message || "Terjadi kesalahan";
+      setError(errorMsg);
+      toast.error(errorMsg);
       setCategories([]);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleDeleteCategory = async (categoryId) => {
-    if (window.confirm("Apakah Anda yakin ingin menghapus kategori ini?")) {
-      try {
-        await axiosClient.delete(`/categories/${categoryId}`);
+  const handleDeleteCategory = async (categoryId, categoryName) => {
+    if (!window.confirm(`Apakah Anda yakin ingin menghapus kategori "${categoryName}"?`)) {
+      return;
+    }
+    
+    try {
+      setDeletingId(categoryId);
+      await axiosClient.delete(`/categories/${categoryId}`);
+      toast.success("Kategori berhasil dihapus");
+      
+      // Jika ini adalah item terakhir di halaman, kembali ke halaman sebelumnya
+      if (categories.length === 1 && pagination.currentPage > 1) {
+        setPagination(prev => ({
+          ...prev,
+          currentPage: prev.currentPage - 1
+        }));
+      } else {
         fetchCategories();
-      } catch (err) {
-        setError(err.response?.data?.message || err.message);
-        console.error("Failed to delete category:", err);
       }
+    } catch (err) {
+      const errorMsg = err.response?.data?.message || err.message || "Gagal menghapus kategori";
+      toast.error(errorMsg);
+      console.error("Failed to delete category:", err);
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -99,16 +115,16 @@ export default function Categories() {
   };
 
   const handleFilterChange = (key, value) => {
-    setFilters((prev) => ({
+    setFilters(prev => ({
       ...prev,
       [key]: value,
     }));
-    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
   };
 
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
-    setPagination((prev) => ({ ...prev, currentPage: 1 }));
+    setPagination(prev => ({ ...prev, currentPage: 1 }));
   };
 
   const sortedCategories = [...categories].sort((a, b) => {
@@ -123,7 +139,7 @@ export default function Categories() {
 
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= pagination.totalPages) {
-      setPagination({ ...pagination, currentPage: newPage });
+      setPagination(prev => ({ ...prev, currentPage: newPage }));
     }
   };
 
@@ -139,33 +155,10 @@ export default function Categories() {
     );
   };
 
-  if (loading) {
+  if (loading && categories.length === 0) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="bg-red-50 border-l-4 border-red-500 p-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <AlertCircle className="h-5 w-5 text-red-500" />
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-red-700">
-              Gagal memuat data kategori: {error}
-            </p>
-            <button
-              onClick={fetchCategories}
-              className="mt-2 px-4 py-2 bg-blue-600 text-white rounded-md text-sm"
-            >
-              Coba Lagi
-            </button>
-          </div>
-        </div>
       </div>
     );
   }
@@ -176,7 +169,7 @@ export default function Categories() {
         <h1 className="text-2xl font-bold text-gray-800">Manajemen Kategori</h1>
         <Link
           to="/categories/create"
-          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
         >
           <Plus className="w-5 h-5 mr-2" />
           Tambah Kategori
@@ -347,6 +340,9 @@ export default function Categories() {
                             src={category.image}
                             alt={category.name}
                             className="h-10 w-10 object-cover"
+                            onError={(e) => {
+                              e.target.src = '/placeholder-image.jpg';
+                            }}
                           />
                         </div>
                       ) : (
@@ -374,14 +370,21 @@ export default function Categories() {
                         <Link
                           to={`/categories/edit/${category.id}`}
                           className="text-green-600 hover:text-green-900"
+                          title="Edit Kategori"
                         >
                           <Edit className="w-5 h-5" />
                         </Link>
                         <button
-                          onClick={() => handleDeleteCategory(category.id)}
-                          className="text-red-600 hover:text-red-900"
+                          onClick={() => handleDeleteCategory(category.id, category.name)}
+                          className="text-red-600 hover:text-red-900 disabled:opacity-50"
+                          title="Hapus Kategori"
+                          disabled={deletingId === category.id}
                         >
-                          <Trash2 className="w-5 h-5" />
+                          {deletingId === category.id ? (
+                            <div className="animate-spin rounded-full h-5 w-5 border-t-2 border-b-2 border-red-600"></div>
+                          ) : (
+                            <Trash2 className="w-5 h-5" />
+                          )}
                         </button>
                       </div>
                     </td>
@@ -393,13 +396,11 @@ export default function Categories() {
                     <div className="text-gray-500 flex flex-col items-center py-8">
                       <Grid className="w-12 h-12 text-gray-400 mb-2" />
                       <p>Tidak ada kategori yang ditemukan</p>
-                      {searchTerm ? (
+                      {searchTerm || !filters.activeOnly ? (
                         <button
                           onClick={() => {
                             setSearchTerm("");
-                            setFilters({
-                              activeOnly: true,
-                            });
+                            setFilters({ activeOnly: true });
                           }}
                           className="mt-2 text-blue-600 hover:text-blue-800 text-sm"
                         >

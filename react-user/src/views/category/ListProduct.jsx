@@ -9,6 +9,8 @@ import {
   HeartIcon,
   ShoppingBagIcon,
   ArrowPathIcon,
+  FunnelIcon,
+  AdjustmentsHorizontalIcon
 } from "@heroicons/react/24/outline";
 import {
   HeartIcon as HeartIconSolid,
@@ -34,6 +36,7 @@ export default function ListProduct() {
   const [addingToCart, setAddingToCart] = useState({});
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [wishlist, setWishlist] = useState([]);
+  const [showMobileFilters, setShowMobileFilters] = useState(false);
 
   const itemsPerPage = 12;
 
@@ -573,49 +576,35 @@ export default function ListProduct() {
           </ol>
         </nav>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          <aside className="w-full lg:w-64 bg-white p-6 rounded-lg shadow-md h-fit sticky top-4">
-            <h2 className="text-xl font-bold mb-4 text-gray-800">Categories</h2>
-            <div className="space-y-2">
-              <button
-                onClick={() => handleCategoryChange("")}
-                className={`block w-full text-left px-3 py-2 rounded transition-colors ${
-                  !selectedCategory
-                    ? "bg-blue-100 text-blue-700 font-medium border border-blue-300"
-                    : "text-gray-700 hover:bg-gray-100"
-                }`}
-              >
-                All Categories
-              </button>
-              {categories.map((category) => (
-                <button
-                  key={category.id}
-                  onClick={() => handleCategoryChange(category.name)}
-                  className={`block w-full text-left px-3 py-2 rounded transition-colors ${
-                    selectedCategory === category.name
-                      ? "bg-blue-100 text-blue-700 font-medium border border-blue-300"
-                      : "text-gray-700 hover:bg-gray-100"
-                  }`}
-                >
-                  {category.name}
-                </button>
-              ))}
+        {/* Filter Section - Dipindahkan ke atas */}
+        <div className="bg-white p-4 rounded-lg shadow-md mb-6">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex items-center gap-2">
+              <FunnelIcon className="w-5 h-5 text-gray-600" />
+              <h2 className="text-lg font-semibold text-gray-800">Filters</h2>
             </div>
-          </aside>
+            
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* Category Filter */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">Category</label>
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => handleCategoryChange(e.target.value)}
+                  className="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all"
+                >
+                  <option value="">All Categories</option>
+                  {categories.map((category) => (
+                    <option key={category.id} value={category.name}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-          <div className="flex-grow">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
-              <h1 className="text-2xl font-bold text-gray-800">
-                {selectedCategory
-                  ? `${selectedCategory} Products`
-                  : "All Products"}
-                <span className="text-gray-600 text-lg font-normal ml-2">
-                  ({products.length} products)
-                </span>
-              </h1>
-
-              <div className="flex items-center gap-3">
-                <span className="text-gray-700 text-sm">Sort by:</span>
+              {/* Sort Filter */}
+              <div className="flex flex-col">
+                <label className="text-sm font-medium text-gray-700 mb-1">Sort by</label>
                 <select
                   value={`${sortBy}-${sortOrder}`}
                   onChange={(e) => {
@@ -633,6 +622,23 @@ export default function ListProduct() {
                   <option value="rating-asc">Rating (Lowest)</option>
                 </select>
               </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Hapus sidebar filter karena sudah dipindahkan ke atas */}
+          
+          <div className="flex-grow">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+              <h1 className="text-2xl font-bold text-gray-800">
+                {selectedCategory
+                  ? `${selectedCategory} Products`
+                  : "All Products"}
+                <span className="text-gray-600 text-lg font-normal ml-2">
+                  ({products.length} products)
+                </span>
+              </h1>
             </div>
 
             {loading && (

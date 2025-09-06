@@ -160,13 +160,6 @@ function Navbar() {
             >
               Kategori
             </Link>
-            <Link
-              to="/reviews"
-              className="text-gray-800 text-lg font-medium hover:text-orange-600 transition-colors flex items-center"
-            >
-              <StarIcon className="h-5 w-5 mr-1" />
-              Review
-            </Link>
           </div>
 
           {/* User Actions */}
@@ -316,14 +309,7 @@ function Navbar() {
             >
               Kategori
             </Link>
-            <Link
-              to="/reviews"
-              className="text-gray-800 font-medium hover:text-orange-600 py-2 flex items-center"
-              onClick={() => setIsMenuOpen(false)}
-            >
-              <StarIcon className="h-5 w-5 mr-2" />
-              Review
-            </Link>
+            
 
             {/* Shopping Cart in Mobile Menu - Only show if user is logged in */}
             {user && (

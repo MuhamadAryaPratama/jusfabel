@@ -7,6 +7,7 @@ import { ArrowLeft, Edit, Star } from "lucide-react";
 export default function ProductDetail() {
   const { id } = useParams();
   const [product, setProduct] = useState(null);
+  const [categoryName, setCategoryName] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -19,11 +20,33 @@ export default function ProductDetail() {
       const response = await axiosClient.get(`/products/${id}`);
       if (response.data.success) {
         setProduct(response.data.data);
+        
+        // Jika produk memiliki category_id, ambil nama kategori
+        if (response.data.data.category_id) {
+          fetchCategoryName(response.data.data.category_id);
+        } else {
+          setLoading(false);
+        }
       } else {
         setError("Produk tidak ditemukan");
+        setLoading(false);
       }
     } catch (err) {
       setError(err.response?.data?.message || "Gagal memuat detail produk");
+      setLoading(false);
+    }
+  };
+
+  const fetchCategoryName = async (categoryId) => {
+    try {
+      const response = await axiosClient.get(`/categories/${categoryId}`);
+      if (response.data.success) {
+        setCategoryName(response.data.data.name);
+      } else {
+        setCategoryName("Kategori tidak ditemukan");
+      }
+    } catch (err) {
+      setCategoryName("Gagal memuat kategori");
     } finally {
       setLoading(false);
     }
@@ -143,9 +166,11 @@ export default function ProductDetail() {
 
               <div>
                 <h3 className="text-sm font-medium text-gray-700 mb-1">
-                  Kategori ID
+                  Kategori
                 </h3>
-                <p className="text-gray-600">{product.category_id || "-"}</p>
+                <p className="text-gray-600">
+                  {product.category_id ? categoryName : "-"}
+                </p>
               </div>
             </div>
 

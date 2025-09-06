@@ -392,12 +392,6 @@ export default function AdminTransactions() {
                 >
                   Bukti Pembayaran
                 </th>
-                <th
-                  scope="col"
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                >
-                  Aksi
-                </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -405,7 +399,7 @@ export default function AdminTransactions() {
                 sortedTransactions.map((transaction) => (
                   <tr key={transaction.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      #{transaction.id}
+                      {transaction.id}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                       <div>
@@ -506,22 +500,11 @@ export default function AdminTransactions() {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <button
-                        onClick={() => {
-                          // View transaction details
-                          console.log("View transaction:", transaction.id);
-                        }}
-                        className="text-blue-600 hover:text-blue-800 text-xs"
-                      >
-                        Detail
-                      </button>
-                    </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan="8" className="px-6 py-4 text-center">
+                  <td colSpan="7" className="px-6 py-4 text-center">
                     <div className="text-gray-500 flex flex-col items-center py-8">
                       <Package className="w-12 h-12 text-gray-400 mb-2" />
                       <p>Belum ada transaksi</p>

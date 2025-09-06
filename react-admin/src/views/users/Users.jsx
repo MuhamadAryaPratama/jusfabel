@@ -378,9 +378,7 @@ export default function UserManagement() {
                           <div className="text-sm font-medium text-gray-900">
                             {user.full_name || user.name || "N/A"}
                           </div>
-                          <div className="text-sm text-gray-500">
-                            ID: {user._id || user.id}
-                          </div>
+                          
                         </div>
                       </div>
                     </td>

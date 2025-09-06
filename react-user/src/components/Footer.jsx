@@ -1,7 +1,7 @@
 import Logo from "../assets/jusfabel-logo.png";
 export default function Footer() {
   return (
-    <footer className="bg-blue-900 text-white p-10">
+    <footer className="bg-amber-900 text-white p-10">
       <div className="container mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
         {/* Logo & Deskripsi */}
         <div>
@@ -12,15 +12,14 @@ export default function Footer() {
         </div>
 
         {/* Layanan */}
-        {/*<div>
-          <h3 className="font-semibold mb-4">Layanan</h3>
+        <div>
+          <h3 className="font-semibold mb-4">Produk</h3>
           <ul className="space-y-2">
-            <li>Service Rutin</li>
-            <li>Ganti Oli</li>
-            <li>Tune Up</li>
-            <li>Emergency Service</li>
+            <li>Carpet & Rugs</li>
+            <li>Elegants Lamps</li>
+            <li>Wall Decor</li>
           </ul>
-        </div>*/}
+        </div>
 
         {/* Perusahaan */}
         <div>

@@ -13,7 +13,6 @@ import TransactionRejected from "./components/transactions/TransactionRejected";
 import Service from "./views/Service";
 import About from "./views/About";
 import Contact from "./views/Contact";
-import AcceptedBooking from "./components/AcceptedBooking";
 import RejectedBooking from "./components/RejectedBooking";
 import ShoppingCart from "./views/shoppingcart/ShoppingCart";
 import WishlistPage from "./views/wishlist/WishlistPage";
@@ -60,10 +59,7 @@ const router = createBrowserRouter([
     path: "/payment", // Add payment route
     element: <Payment />,
   },
-  {
-    path: "/bookings/:id/accepted",
-    element: <AcceptedBooking />,
-  },
+
   {
     path: "/bookings/:id/rejected",
     element: <RejectedBooking />,

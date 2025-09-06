@@ -20,13 +20,12 @@ import {
 export default function SalesReport() {
   const [reportData, setReportData] = useState({
     summary: {
-      totalRevenue: 0,
-      totalTransactions: 0,
-      averageOrderValue: 0,
-      totalCustomers: 0,
+      total_transactions: 0,
+      total_revenue: 0,
+      average_order_value: 0,
+      total_customers: 0,
     },
     transactions: [],
-    dailyStats: [],
     productStats: [],
   });
   const [loading, setLoading] = useState(true);
@@ -38,7 +37,7 @@ export default function SalesReport() {
     endDate: new Date().toISOString().split("T")[0],
   });
   const [filters, setFilters] = useState({
-    status: "accept", // Default hanya transaksi yang diterima
+    status: "accept",
   });
   const [sortConfig, setSortConfig] = useState({
     key: "date",
@@ -58,7 +57,7 @@ export default function SalesReport() {
         status: filters.status,
       };
 
-      // Hapus parameter yang kosong
+      // Remove empty parameters
       Object.keys(params).forEach((key) => {
         if (params[key] === null || params[key] === "") {
           delete params[key];
@@ -67,40 +66,72 @@ export default function SalesReport() {
 
       const response = await axiosClient.get(
         "/transactions/stats/sales-report",
-        {
-          params,
-        }
+        { params }
       );
 
       if (response.data && response.data.success) {
-        // Sanitize data untuk mencegah NaN
         const data = response.data.data;
+        
+        // Calculate summary from transactions if summary data is not provided
+        let summary = data.summary || {
+          total_transactions: 0,
+          total_revenue: 0,
+          average_order_value: 0,
+          total_customers: 0,
+        };
+
+        // If summary data is incomplete, calculate from transactions
+        if (data.transactions && data.transactions.length > 0) {
+          const transactions = data.transactions;
+          
+          // Calculate total revenue
+          if (summary.total_revenue === 0) {
+            summary.total_revenue = transactions.reduce((total, transaction) => 
+              total + sanitizeNumber(transaction.total_price), 0
+            );
+          }
+          
+          // Calculate total transactions
+          if (summary.total_transactions === 0) {
+            summary.total_transactions = transactions.length;
+          }
+          
+          // Calculate average order value
+          if (summary.average_order_value === 0 && transactions.length > 0) {
+            summary.average_order_value = summary.total_revenue / transactions.length;
+          }
+          
+          // Calculate total unique customers
+          if (summary.total_customers === 0) {
+            const uniqueCustomers = new Set(
+              transactions.map(t => t.customer_email || t.customer_name)
+            );
+            summary.total_customers = uniqueCustomers.size;
+          }
+        }
+
         const sanitizedData = {
           summary: {
-            totalRevenue: sanitizeNumber(data.summary?.totalRevenue),
-            totalTransactions: sanitizeNumber(data.summary?.totalTransactions),
-            averageOrderValue: sanitizeNumber(data.summary?.averageOrderValue),
-            totalCustomers: sanitizeNumber(data.summary?.totalCustomers),
+            total_transactions: sanitizeNumber(summary.total_transactions),
+            total_revenue: sanitizeNumber(summary.total_revenue),
+            average_order_value: sanitizeNumber(summary.average_order_value),
+            total_customers: sanitizeNumber(summary.total_customers),
           },
-          transactions: Array.isArray(data.transactions)
-            ? data.transactions
-            : [],
-          dailyStats: Array.isArray(data.dailyStats) ? data.dailyStats : [],
-          productStats: Array.isArray(data.productStats)
-            ? data.productStats
-            : [],
+          transactions: Array.isArray(data.transactions) ? data.transactions : [],
+          productStats: Array.isArray(data.productStats) ? data.productStats : [],
         };
+        
         setReportData(sanitizedData);
       } else {
+        // Set empty data if no data returned
         setReportData({
           summary: {
-            totalRevenue: 0,
-            totalTransactions: 0,
-            averageOrderValue: 0,
-            totalCustomers: 0,
+            total_transactions: 0,
+            total_revenue: 0,
+            average_order_value: 0,
+            total_customers: 0,
           },
           transactions: [],
-          dailyStats: [],
           productStats: [],
         });
       }
@@ -112,8 +143,9 @@ export default function SalesReport() {
     }
   };
 
-  // Helper function untuk sanitize numbers
+  // Helper function to sanitize numbers
   const sanitizeNumber = (value) => {
+    if (value === null || value === undefined) return 0;
     const num = Number(value);
     return isNaN(num) || !isFinite(num) ? 0 : num;
   };
@@ -139,24 +171,24 @@ export default function SalesReport() {
   };
 
   const exportToCSV = () => {
-    // Header CSV
+    // CSV header
     let csvContent = "Laporan Penjualan\n";
     csvContent += `Periode: ${formatDate(dateRange.startDate)} - ${formatDate(
       dateRange.endDate
     )}\n\n`;
 
-    // Ringkasan
+    // Summary
     csvContent += "RINGKASAN\n";
     csvContent += `Total Pendapatan,${formatPrice(
-      reportData.summary.totalRevenue
+      reportData.summary.total_revenue
     )}\n`;
-    csvContent += `Total Transaksi,${reportData.summary.totalTransactions}\n`;
+    csvContent += `Total Transaksi,${reportData.summary.total_transactions}\n`;
     csvContent += `Rata-rata Nilai Pesanan,${formatPrice(
-      reportData.summary.averageOrderValue
+      reportData.summary.average_order_value
     )}\n`;
-    csvContent += `Total Pelanggan,${reportData.summary.totalCustomers}\n\n`;
+    csvContent += `Total Pelanggan,${reportData.summary.total_customers}\n\n`;
 
-    // Data transaksi
+    // Transaction data
     csvContent += "TRANSAKSI\n";
     csvContent += "ID,Tanggal,Pelanggan,Items,Quantity,Total,Status\n";
 
@@ -168,7 +200,7 @@ export default function SalesReport() {
       )},${sanitizeNumber(transaction.total_price)},${transaction.status}\n`;
     });
 
-    // Buat file dan download
+    // Create and download file
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
@@ -333,7 +365,7 @@ export default function SalesReport() {
                 Total Pendapatan
               </p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatPrice(reportData.summary.totalRevenue)}
+                {formatPrice(reportData.summary.total_revenue)}
               </p>
             </div>
           </div>
@@ -349,7 +381,7 @@ export default function SalesReport() {
                 Total Transaksi
               </p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatNumber(reportData.summary.totalTransactions)}
+                {formatNumber(reportData.summary.total_transactions)}
               </p>
             </div>
           </div>
@@ -365,7 +397,7 @@ export default function SalesReport() {
                 Rata-rata Pesanan
               </p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatPrice(reportData.summary.averageOrderValue)}
+                {formatPrice(reportData.summary.average_order_value)}
               </p>
             </div>
           </div>
@@ -381,7 +413,7 @@ export default function SalesReport() {
                 Total Pelanggan
               </p>
               <p className="text-2xl font-bold text-gray-900">
-                {formatNumber(reportData.summary.totalCustomers)}
+                {formatNumber(reportData.summary.total_customers)}
               </p>
             </div>
           </div>
@@ -475,7 +507,7 @@ export default function SalesReport() {
                 reportData.transactions.map((transaction) => (
                   <tr key={transaction.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      #{sanitizeNumber(transaction.id) || "-"}
+                      {sanitizeNumber(transaction.id) || "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {formatDate(transaction.created_at)}

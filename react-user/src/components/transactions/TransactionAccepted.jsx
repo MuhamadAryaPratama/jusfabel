@@ -68,6 +68,11 @@ function TransactionAccepted() {
     }
   };
 
+  // Function to handle review button click
+  const handleReviewClick = () => {
+    navigate("/reviews");
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col bg-gray-50">
@@ -272,6 +277,13 @@ function TransactionAccepted() {
               className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors font-medium"
             >
               Lihat Pesanan Saya
+            </button>
+            {/* Review Button */}
+            <button
+              onClick={handleReviewClick}
+              className="px-6 py-3 bg-orange-600 text-white rounded-md hover:bg-orange-700 transition-colors font-medium"
+            >
+              Beri Review Produk
             </button>
           </div>
         </div>
